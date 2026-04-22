@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>VidéoStudio</title>
+><title>VidéoStudio</title>><title>VidéoStudio</title>data-t="exp"><title>VidéoStudio</title><button class="tab" data-t="vo">🎙 VOIX OFF</button><button class="tab" data-t="vo">🎙 VOIX OFF</button>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -263,7 +263,34 @@ textarea.fi{resize:none}
     <button class="btn ba" onclick="doMerge()" style="width:100%;padding:12px;font-size:12px;letter-spacing:1px;margin-bottom:8px">🎬 ASSEMBLER LA TIMELINE</button>
     <div id="expresult" style="margin-top:6px"></div>
   </div>
-</div>
+</div><!-- VOIX OFF -->
+<div class="pnl" id="pnl-vo">
+  <div style="background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:12px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--accent);margin-bottom:9px">🔊 TEXTE → VOIX</div>
+          <div class="fg"><label class="fl">TAPE TON TEXTE</label>
+                <textarea class="fi" id="tts-txt" placeholder="Écris le texte à lire..." rows="4"></textarea></div>
+                    <div class="fg"><label class="fl">LANGUE</label>
+                          <select class="fi" id="tts-lang"><option value="fr-FR">Français</option><option value="en-US">English</option></select></div>
+                              <div class="fg"><label class="fl">VITESSE: <span id="tts-rate-lbl">1</span></label>
+                                    <input type="range" min="0.5" max="2" step="0.1" value="1" id="tts-rate" style="width:100%" oninput="document.getElementById('tts-rate-lbl').textContent=this.value"></div>
+                                        <div style="display:flex;gap:8px">
+                                              <button class="btn ba" onclick="ttsPlay()" style="flex:1;padding:10px">▶ ÉCOUTER</button>
+                                                    <button class="btn bd" onclick="ttsStop()" style="flex:1;padding:10px">⏹ STOP</button>
+                                                        </div>
+                                                          </div>
+                                                            <div style="background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:12px">
+                                                                <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--accent);margin-bottom:9px">🎙 ENREGISTRER TA VOIX</div>
+                                                                    <div id="rec-status" style="text-align:center;padding:12px;font-size:11px;color:var(--muted);margin-bottom:10px">Prêt à enregistrer</div>
+                                                                        <div style="display:flex;gap:8px;margin-bottom:10px">
+                                                                              <button class="btn ba" id="rec-btn" onclick="recStart()" style="flex:1;padding:10px">🔴 ENREGISTRER</button>
+                                                                                    <button class="btn bd" id="rec-stop" onclick="recStop()" style="flex:1;padding:10px" disabled>⏹ STOP</button>
+                                                                                        </div>
+                                                                                            <div id="rec-result" style="display:none">
+                                                                                                  <audio id="rec-audio" controls style="width:100%;margin-bottom:8px"></audio>
+                                                                                                        <a id="rec-dl" class="btn ba" style="display:block;text-align:center;text-decoration:none;padding:10px">⬇ TÉLÉCHARGER</a>
+                                                                                                            </div>
+                                                                                                              </div>
+                                                                                                              </div>
 
 <!-- PROGRESS MODAL -->
 <div id="pmod">
@@ -629,7 +656,55 @@ async function urlToFile(url, name) {
   return new File([b],name,{type:b.type});
 }
 
-upSum(); renderClips();
+upSum(); renderClips();// ═══ VOIX OFF ════════════════════════════════════════════════════════
+function ttsPlay() {
+  if (!('speechSynthesis' in window)) { notify('TTS non supporté', 'err'); return; }
+    window.speechSynthesis.cancel();
+      const txt = document.getElementById('tts-txt').value.trim();
+        if (!txt) { notify('Écris un texte d\'abord', 'err'); return; }
+          const u = new SpeechSynthesisUtterance(txt);
+            u.lang = document.getElementById('tts-lang').value;
+              u.rate = parseFloat(document.getElementById('tts-rate').value);
+                window.speechSynthesis.speak(u);
+                  notify('🔊 Lecture en cours...', 'ok');
+                  }
+                  function ttsStop() {
+                    window.speechSynthesis.cancel();
+                      notify('⏹ Arrêté');
+                      }
+                      let mediaRec, recChunks = [];
+                      async function recStart() {
+                        try {
+                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                recChunks = [];
+                                    mediaRec = new MediaRecorder(stream);
+                                        mediaRec.ondataavailable = e => recChunks.push(e.data);
+                                            mediaRec.onstop = () => {
+                                                  const blob = new Blob(recChunks, { type: 'audio/webm' });
+                                                        const url = URL.createObjectURL(blob);
+                                                              document.getElementById('rec-audio').src = url;
+                                                                    document.getElementById('rec-dl').href = url;
+                                                                          document.getElementById('rec-dl').download = 'voix-off.webm';
+                                                                                document.getElementById('rec-result').style.display = 'block';
+                                                                                      document.getElementById('rec-status').textContent = '✅ Enregistrement terminé';
+                                                                                            notify('🎙 Voix off enregistrée !', 'ok');
+                                                                                                };
+                                                                                                    mediaRec.start();
+                                                                                                        document.getElementById('rec-btn').disabled = true;
+                                                                                                            document.getElementById('rec-stop').disabled = false;
+                                                                                                                document.getElementById('rec-status').textContent = '🔴 Enregistrement en cours...';
+                                                                                                                    document.getElementById('rec-result').style.display = 'none';
+                                                                                                                        notify('🔴 Enregistrement démarré', 'ok');
+                                                                                                                          } catch(e) { notify('Micro non accessible : ' + e.message, 'err'); }
+                                                                                                                          }
+                                                                                                                          function recStop() {
+                                                                                                                            if (mediaRec && mediaRec.state !== 'inactive') {
+                                                                                                                                mediaRec.stop();
+                                                                                                                                    mediaRec.stream.getTracks().forEach(t => t.stop());
+                                                                                                                                        document.getElementById('rec-btn').disabled = false;
+                                                                                                                                            document.getElementById('rec-stop').disabled = true;
+                                                                                                                                              }
+                                                                                                                                              }
 </script>
 </body>
 </html>
